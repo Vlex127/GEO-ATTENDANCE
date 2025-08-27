@@ -31,6 +31,18 @@ export const userProfileService = {
       return document
     } catch (error) {
       console.error("Error creating user profile:", error)
+      
+      // Provide more helpful error messages
+      if (error.code === 404) {
+        throw new Error("Database or collection not found. Please check your Appwrite setup.")
+      }
+      if (error.message?.includes("Collection with the requested ID could not be found")) {
+        throw new Error("User profiles collection not found. Please create the 'user_profiles' collection in Appwrite.")
+      }
+      if (error.message?.includes("Database with the requested ID could not be found")) {
+        throw new Error("Database not found. Please create a database in your Appwrite project.")
+      }
+      
       throw error
     }
   },

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 
 import { userProfileService } from "@/lib/database"
 import { account } from "@/lib/appwrite"
+import { DatabaseSetupHelper } from "@/components/database-setup-helper"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
@@ -153,6 +154,8 @@ export function ProfileCompletionForm({
             {error}
           </div>
         )}
+
+        <DatabaseSetupHelper error={error} />
 
         <div className="grid gap-3">
           <Label htmlFor="fullName">Full Name *</Label>
