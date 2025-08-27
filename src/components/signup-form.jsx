@@ -3,14 +3,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-interface SignupFormProps extends React.HTMLAttributes<HTMLFormElement> {
-  className?: string
-}
-
 export function SignupForm({
   className,
   ...props
-}: SignupFormProps) {
+}) {
   return (
     <form className={cn("grid gap-6", className)} {...props}>
       <div className="grid gap-2">
