@@ -18,6 +18,14 @@ export default function HomePage() {
   const checkAuth = async () => {
     try {
       const currentUser = await account.get()
+      
+      // Check if email is verified
+      if (!currentUser.emailVerification) {
+        // User exists but email is not verified, redirect to verification page
+        router.push(`/verify-email?email=${encodeURIComponent(currentUser.email)}`)
+        return
+      }
+      
       setUser(currentUser)
     } catch (error) {
       // User is not authenticated, redirect to login

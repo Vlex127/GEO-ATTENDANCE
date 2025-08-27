@@ -34,6 +34,18 @@ export function LoginForm({
       // Login with Appwrite
       await account.createEmailPasswordSession(email, password)
       
+      // Check if user's email is verified
+      try {
+        const user = await account.get()
+        if (!user.emailVerification) {
+          // User exists but email is not verified
+          router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+          return
+        }
+      } catch (e) {
+        // Continue with normal flow if we can't check verification status
+      }
+      
       // Redirect to home page after successful login
       router.push("/home")
     } catch (error) {
