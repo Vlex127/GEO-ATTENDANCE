@@ -44,8 +44,8 @@ export function SignupForm({
       // Automatically log in the user after account creation
       await account.createEmailPasswordSession(email, password)
       
-      // Redirect to dashboard or home page
-      router.push("/")
+      // Redirect to home page
+      router.push("/home")
     } catch (error) {
       console.error("Signup error:", error)
       setError(error.message || "An error occurred during signup")
@@ -59,8 +59,8 @@ export function SignupForm({
       setIsLoading(true)
       await account.createOAuth2Session(
         'google',
-        `${window.location.origin}/`,
-        `${window.location.origin}/login`
+        `${window.location.origin}/home`,
+        `${window.location.origin}/signup`
       )
     } catch (error) {
       console.error("Google signup error:", error)
