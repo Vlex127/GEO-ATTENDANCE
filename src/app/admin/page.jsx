@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { account } from "@/lib/appwrite"
-import { adminService, userProfileService } from "@/lib/database"
-import { userStatsService } from "@/lib/user-stats"
+import { adminService } from "@/lib/database"
+import { authStatsService } from "@/lib/auth-stats"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -17,9 +17,9 @@ export default function AdminPage() {
   const [userProfiles, setUserProfiles] = useState([])
   const [admins, setAdmins] = useState([])
   const [stats, setStats] = useState({
-    usersWithProfiles: 0,
     totalAdmins: 0,
-    attendanceRecords: 0
+    attendanceRecords: 0,
+    note: ""
   })
   const router = useRouter()
 
@@ -55,15 +55,11 @@ export default function AdminPage() {
       const adminList = await adminService.listAdmins()
       setAdmins(adminList)
       
-      // Load user statistics
-      const userStats = await userStatsService.getDetailedStats()
+      // Load simplified stats
+      const authStats = await authStatsService.getStats()
       
-      // Update stats with proper counting
-      setStats({
-        usersWithProfiles: userStats.usersWithProfiles,
-        totalAdmins: adminList.length,
-        attendanceRecords: userStats.attendanceRecords
-      })
+      // Update stats
+      setStats(authStats)
       
     } catch (error) {
       console.error("Error loading admin data:", error)
@@ -135,22 +131,17 @@ export default function AdminPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <Card className="p-6">
-            <h3 className="font-semibold mb-2">Active Users</h3>
-            <p className="text-2xl font-bold text-blue-600 mb-2">{stats.usersWithProfiles}</p>
-            <p className="text-sm text-muted-foreground">Users with completed profiles</p>
-            <p className="text-xs text-gray-500 mt-1">*Excludes incomplete signups</p>
-          </Card>
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
           <Card className="p-6">
             <h3 className="font-semibold mb-2">Administrators</h3>
             <p className="text-2xl font-bold text-green-600 mb-2">{stats.totalAdmins}</p>
             <p className="text-sm text-muted-foreground">System administrators</p>
           </Card>
           <Card className="p-6">
-            <h3 className="font-semibold mb-2">Attendance Records</h3>
-            <p className="text-2xl font-bold text-purple-600 mb-2">{stats.attendanceRecords}</p>
-            <p className="text-sm text-muted-foreground">Total check-ins/outs</p>
+            <h3 className="font-semibold mb-2">System Status</h3>
+            <p className="text-2xl font-bold text-blue-600 mb-2">✅ Auth Only</p>
+            <p className="text-sm text-muted-foreground">Simplified user management</p>
+            <p className="text-xs text-gray-500 mt-1">User profiles stored in Auth preferences</p>
           </Card>
         </div>
 

@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-import { userProfileService } from "@/lib/database"
 import { account } from "@/lib/appwrite"
-import { DatabaseSetupHelper } from "@/components/database-setup-helper"
-import { MinimalSetupHelper } from "@/components/minimal-setup-helper"
+import { authProfileService } from "@/lib/auth-profile"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
@@ -122,8 +120,8 @@ export function ProfileCompletionForm({
         throw new Error("User not found")
       }
 
-      // Create user profile in database
-      await userProfileService.create(user.$id, formData)
+      // Save user profile to Auth preferences
+      await authProfileService.updateProfile(formData)
       
       // Redirect to home page
       router.push("/home")
@@ -156,8 +154,7 @@ export function ProfileCompletionForm({
           </div>
         )}
 
-        <DatabaseSetupHelper error={error} />
-        <MinimalSetupHelper error={error} />
+
 
         <div className="grid gap-3">
           <Label htmlFor="fullName">Full Name *</Label>

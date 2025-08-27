@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { account } from "@/lib/appwrite"
-import { userProfileService, adminService } from "@/lib/database"
+import { authProfileService } from "@/lib/auth-profile"
+import { adminService } from "@/lib/database"
 
 export function useAuth() {
   const [user, setUser] = useState(null)
@@ -28,7 +29,7 @@ export function useAuth() {
       }
 
       // Check if user has completed their profile
-      const isProfileComplete = await userProfileService.isProfileComplete(currentUser.$id)
+      const isProfileComplete = await authProfileService.isProfileComplete()
       if (!isProfileComplete) {
         router.push("/complete-profile")
         return

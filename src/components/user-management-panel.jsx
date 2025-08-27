@@ -44,17 +44,17 @@ export function UserManagementPanel() {
 
       {showUsers && (
         <div className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
             <div className="flex items-center gap-2 mb-2">
-              <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-              <h5 className="text-sm font-semibold text-blue-800 dark:text-blue-200">
-                User Count Explanation
+              <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+              <h5 className="text-sm font-semibold text-green-800 dark:text-green-200">
+                Auth-Only Approach
               </h5>
             </div>
-            <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-              <p><strong>Active Users:</strong> Users who completed profile setup</p>
-              <p><strong>Auth Users:</strong> All users who signed up (including incomplete profiles)</p>
-              <p><strong>Why the difference?</strong> Some users sign up but don't complete their profiles</p>
+            <div className="text-sm text-green-700 dark:text-green-300 space-y-1">
+              <p><strong>✅ Simplified:</strong> User profiles stored in Auth preferences</p>
+              <p><strong>✅ No Database:</strong> No duplicate counting issues</p>
+              <p><strong>✅ Easy Start:</strong> Can expand to database later when needed</p>
             </div>
           </div>
 
