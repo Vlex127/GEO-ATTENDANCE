@@ -44,8 +44,8 @@ export function SignupForm({
       // Create session immediately after account creation
       await account.createEmailSession(email, password)
       
-      // Redirect directly to home page
-      router.push("/home")
+      // Redirect to profile completion page
+      router.push("/complete-profile")
     } catch (error) {
       console.error("Signup error:", error)
       setError(error.message || "An error occurred during signup")

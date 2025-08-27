@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { account } from "@/lib/appwrite"
+import { userProfileService } from "@/lib/database"
 
 export function useAuth() {
   const [user, setUser] = useState(null)
@@ -19,7 +20,14 @@ export function useAuth() {
       setError(null)
       const currentUser = await account.get()
       
-      // Set user without checking email verification
+      // Check if user has completed their profile
+      const isProfileComplete = await userProfileService.isProfileComplete(currentUser.$id)
+      if (!isProfileComplete) {
+        router.push("/complete-profile")
+        return
+      }
+      
+      // Set user if profile is complete
       setUser(currentUser)
     } catch (error) {
       console.error("Authentication error:", error)
