@@ -22,18 +22,19 @@ Your application requires a database and collections to be created in your Appwr
 ### Add Attributes to User Profiles Collection:
 1. Click on the `user_profiles` collection
 2. Go to **Attributes** tab
-3. Add these attributes:
+3. Click **Create Attribute** for each of these:
 
-| Attribute Key | Type | Size | Required | Default |
-|---------------|------|------|----------|---------|
-| `userId` | String | 255 | Yes | - |
-| `fullName` | String | 255 | Yes | - |
-| `phoneNumber` | String | 50 | Yes | - |
-| `matricNumber` | String | 50 | Yes | - |
-| `department` | String | 255 | No | - |
-| `level` | String | 50 | No | - |
-| `createdAt` | String | 255 | Yes | - |
-| `updatedAt` | String | 255 | Yes | - |
+**Required Attributes (add these first):**
+- `userId` (String, Size: 255, Required: ✓)
+- `fullName` (String, Size: 255, Required: ✓)  
+- `phoneNumber` (String, Size: 50, Required: ✓)
+- `matricNumber` (String, Size: 50, Required: ✓)
+
+**Optional Attributes:**
+- `department` (String, Size: 255, Required: ✗)
+- `level` (String, Size: 50, Required: ✗)
+
+> **Important:** You must add these attributes one by one by clicking "Create Attribute" for each field!
 
 ### Set Permissions:
 1. Go to **Settings** tab in the collection

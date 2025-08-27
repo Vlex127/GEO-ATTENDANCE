@@ -13,20 +13,27 @@ export const userProfileService = {
   // Create a new user profile
   async create(userId, profileData) {
     try {
+      // Build document data with only the fields that exist in the collection
+      const documentData = {
+        userId,
+        fullName: profileData.fullName,
+        phoneNumber: profileData.phoneNumber,
+        matricNumber: profileData.matricNumber
+      }
+
+      // Add optional fields only if they have values
+      if (profileData.department) {
+        documentData.department = profileData.department
+      }
+      if (profileData.level) {
+        documentData.level = profileData.level
+      }
+
       const document = await databases.createDocument(
         DATABASE_ID,
         COLLECTIONS.USER_PROFILES,
         userId, // Use userId as document ID
-        {
-          userId,
-          fullName: profileData.fullName,
-          phoneNumber: profileData.phoneNumber,
-          matricNumber: profileData.matricNumber,
-          department: profileData.department || null,
-          level: profileData.level || null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
+        documentData
       )
       return document
     } catch (error) {
