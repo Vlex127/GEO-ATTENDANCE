@@ -24,6 +24,13 @@ export function LoginForm({
     setIsLoading(true)
 
     try {
+      // Check if user is already logged in and log them out first
+      try {
+        await account.deleteSession("current")
+      } catch (e) {
+        // No existing session, continue
+      }
+      
       // Login with Appwrite
       await account.createEmailPasswordSession(email, password)
       
