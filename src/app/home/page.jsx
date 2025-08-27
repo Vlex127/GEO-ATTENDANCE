@@ -35,7 +35,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-transparent">
+      <header className="backdrop-blur-md bg-white/10 dark:bg-black/10 border-b border-white/20 dark:border-white/10">
         <div className="max-w-4xl mx-auto px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <img src="/lasu.png" alt="LASU" className="h-8 w-8" />
