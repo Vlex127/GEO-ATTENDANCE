@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { account } from "@/lib/appwrite"
+import { adminService } from "@/lib/database"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -34,8 +35,21 @@ export function LoginForm({
       // Login with Appwrite
       await account.createEmailPasswordSession(email, password)
       
-      // Redirect to home page after successful login (no email verification check)
-      router.push("/home")
+      // Check if user is admin and redirect accordingly
+      try {
+        const user = await account.get()
+        const isAdmin = await adminService.isAdmin(user.$id)
+        
+        if (isAdmin) {
+          router.push("/admin")
+        } else {
+          router.push("/home")
+        }
+      } catch (adminError) {
+        // If admin check fails, default to home page
+        console.error("Admin check error:", adminError)
+        router.push("/home")
+      }
     } catch (error) {
       console.error("Login error:", error)
       setError(error.message || "Invalid email or password")

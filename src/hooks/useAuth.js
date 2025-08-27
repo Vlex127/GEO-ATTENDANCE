@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { account } from "@/lib/appwrite"
-import { userProfileService } from "@/lib/database"
+import { userProfileService, adminService } from "@/lib/database"
 
 export function useAuth() {
   const [user, setUser] = useState(null)
@@ -20,6 +20,13 @@ export function useAuth() {
       setError(null)
       const currentUser = await account.get()
       
+      // Check if user is admin first
+      const isAdmin = await adminService.isAdmin(currentUser.$id)
+      if (isAdmin) {
+        router.push("/admin")
+        return
+      }
+
       // Check if user has completed their profile
       const isProfileComplete = await userProfileService.isProfileComplete(currentUser.$id)
       if (!isProfileComplete) {
