@@ -19,12 +19,7 @@ export function useAuth() {
       setError(null)
       const currentUser = await account.get()
       
-      // Check if email is verified
-      if (!currentUser.emailVerification) {
-        router.push(`/verify-email?email=${encodeURIComponent(currentUser.email)}`)
-        return
-      }
-      
+      // Set user without checking email verification
       setUser(currentUser)
     } catch (error) {
       console.error("Authentication error:", error)

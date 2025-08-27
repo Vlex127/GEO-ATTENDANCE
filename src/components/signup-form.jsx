@@ -41,11 +41,11 @@ export function SignupForm({
       // Create account with Appwrite
       const newAccount = await account.create(ID.unique(), email, password)
       
-      // Send email verification
-      await account.createVerification(`${window.location.origin}/verify-email`)
+      // Create session immediately after account creation
+      await account.createEmailSession(email, password)
       
-      // Show success message and redirect to verification page
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+      // Redirect directly to home page
+      router.push("/home")
     } catch (error) {
       console.error("Signup error:", error)
       setError(error.message || "An error occurred during signup")

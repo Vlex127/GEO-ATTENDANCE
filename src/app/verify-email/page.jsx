@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { account } from "@/lib/appwrite"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { DevEmailBypass } from "@/components/dev-email-bypass"
+import { EmailDebugInfo } from "@/components/email-debug-info"
 import { Mail, CheckCircle, XCircle, Loader2 } from "lucide-react"
 import "../app.css"
 
@@ -179,6 +181,9 @@ function VerifyEmailContent() {
               <div className="text-xs text-muted-foreground pt-4">
                 <p>Didn't receive the email? Check your spam folder or try resending.</p>
               </div>
+
+              <DevEmailBypass email={email} />
+              <EmailDebugInfo />
             </div>
           )}
         </div>
