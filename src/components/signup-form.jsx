@@ -42,7 +42,7 @@ export function SignupForm({
       const newAccount = await account.create(ID.unique(), email, password)
       
       // Create session immediately after account creation
-      await account.createEmailSession(email, password)
+      await account.createEmailPasswordSession(email, password)
       
       // Redirect to profile completion page
       router.push("/complete-profile")
