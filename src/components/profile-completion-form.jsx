@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 import { userProfileService } from "@/lib/database"
 import { account } from "@/lib/appwrite"
 import { useState, useEffect } from "react"
@@ -195,34 +195,38 @@ export function ProfileCompletionForm({
 
         <div className="grid gap-3">
           <Label htmlFor="department">Department (Optional)</Label>
-          <Select onValueChange={(value) => handleInputChange("department", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select your department" />
-            </SelectTrigger>
-            <SelectContent>
-              {departments.map((dept) => (
-                <SelectItem key={dept} value={dept}>
-                  {dept}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select 
+            id="department"
+            value={formData.department}
+            onChange={(e) => handleInputChange("department", e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isLoading}
+          >
+            <option value="">Select your department</option>
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="grid gap-3">
           <Label htmlFor="level">Level (Optional)</Label>
-          <Select onValueChange={(value) => handleInputChange("level", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select your level" />
-            </SelectTrigger>
-            <SelectContent>
-              {levels.map((level) => (
-                <SelectItem key={level} value={level}>
-                  {level}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select 
+            id="level"
+            value={formData.level}
+            onChange={(e) => handleInputChange("level", e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isLoading}
+          >
+            <option value="">Select your level</option>
+            {levels.map((level) => (
+              <option key={level} value={level}>
+                {level}
+              </option>
+            ))}
+          </select>
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
