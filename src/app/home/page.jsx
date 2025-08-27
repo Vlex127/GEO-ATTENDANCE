@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { account } from "@/lib/appwrite"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function HomePage() {
   const [user, setUser] = useState(null)
@@ -58,10 +59,11 @@ export default function HomePage() {
             <img src="/lasu.png" alt="LASU" className="h-8 w-8" />
             <h1 className="text-xl font-bold">LASU AMS - GEO ATTENDANCE</h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
               Welcome, {user.name || user.email}
             </span>
+            <ThemeToggle />
             <Button variant="outline" onClick={handleLogout}>
               Logout
             </Button>
