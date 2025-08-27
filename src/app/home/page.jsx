@@ -1,48 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { account } from "@/lib/appwrite"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function HomePage() {
-  const [user, setUser] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  const checkAuth = async () => {
-    try {
-      const currentUser = await account.get()
-      
-      // Check if email is verified
-      if (!currentUser.emailVerification) {
-        // User exists but email is not verified, redirect to verification page
-        router.push(`/verify-email?email=${encodeURIComponent(currentUser.email)}`)
-        return
-      }
-      
-      setUser(currentUser)
-    } catch (error) {
-      // User is not authenticated, redirect to login
-      router.push("/login")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleLogout = async () => {
-    try {
-      await account.deleteSession("current")
-      router.push("/login")
-    } catch (error) {
-      console.error("Logout error:", error)
-    }
-  }
+  const { user, isLoading, error, logout } = useAuth()
 
   if (isLoading) {
     return (
@@ -50,6 +13,17 @@ export default function HomePage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p>Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <p>Redirecting to login...</p>
         </div>
       </div>
     )
@@ -72,7 +46,7 @@ export default function HomePage() {
               Welcome, {user.name || user.email}
             </span>
             <ThemeToggle />
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="outline" onClick={logout}>
               Logout
             </Button>
           </div>
