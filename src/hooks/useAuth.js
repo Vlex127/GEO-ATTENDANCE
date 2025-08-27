@@ -21,8 +21,8 @@ export function useAuth() {
       setError(null)
       const currentUser = await account.get()
       
-      // Check if user is admin first
-      const isAdmin = await adminService.isAdmin(currentUser.$id)
+      // Check if user has 'admin' label
+      const isAdmin = currentUser.labels && currentUser.labels.includes('admin')
       if (isAdmin) {
         router.push("/admin")
         return

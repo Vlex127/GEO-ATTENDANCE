@@ -1,5 +1,6 @@
 import { databases } from "@/lib/appwrite"
 import { ID, Query } from "appwrite"
+import { account } from "@/lib/appwrite"
 
 // Database and Collection IDs - these should match your Appwrite setup
 export const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "main"
@@ -159,19 +160,14 @@ export const attendanceService = {
 
 // Admin operations
 export const adminService = {
-  // Check if user is admin
+  // Check if user is admin by checking their labels
   async isAdmin(userId) {
     try {
-      const document = await databases.getDocument(
-        DATABASE_ID,
-        COLLECTIONS.ADMINS,
-        userId
-      )
-      return document ? true : false
+      const user = await account.get()
+      // Check if user has 'admin' label
+      const isAdmin = user.labels && user.labels.includes('admin')
+      return isAdmin || false
     } catch (error) {
-      if (error.code === 404) {
-        return false // User is not an admin
-      }
       console.error("Error checking admin status:", error)
       return false
     }

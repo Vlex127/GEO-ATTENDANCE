@@ -35,19 +35,15 @@ export function LoginForm({
       // Login with Appwrite
       await account.createEmailPasswordSession(email, password)
       
-      // Check if user is admin and redirect accordingly
-      try {
-        const user = await account.get()
-        const isAdmin = await adminService.isAdmin(user.$id)
-        
-        if (isAdmin) {
-          router.push("/admin")
-        } else {
-          router.push("/home")
-        }
-      } catch (adminError) {
-        // If admin check fails, default to home page
-        console.error("Admin check error:", adminError)
+      // Get the current user to check labels
+      const user = await account.get()
+      
+      // Check if user has 'admin' label
+      const isAdmin = user.labels && user.labels.includes('admin')
+      
+      if (isAdmin) {
+        router.push("/admin")
+      } else {
         router.push("/home")
       }
     } catch (error) {
