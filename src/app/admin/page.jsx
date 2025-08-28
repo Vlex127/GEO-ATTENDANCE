@@ -442,7 +442,7 @@ export default function AdminPage() {
                 </div>
               }
             >
-               <TableHeader columns={columnsToRender}>
+              <TableHeader columns={columnsToRender}>
   {(column) => (
     <TableColumn
       key={column.key}
@@ -481,6 +481,7 @@ export default function AdminPage() {
     </TableColumn>
   )}
 </TableHeader>
+
 
               <TableBody items={items}>
                 {(item) => (
