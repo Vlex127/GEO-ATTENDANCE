@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { account, users as usersApi } from "@/lib/appwrite"
+import { account } from "@/lib/appwrite"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [page, setPage] = useState(1)
   const [rowsPerPage] = useState(10)
   const [users, setUsers] = useState([])
+  const [errorMsg, setErrorMsg] = useState(null)
   const [stats, setStats] = useState({
     totalAdmins: 0,
     totalUsers: 0,
@@ -68,35 +69,23 @@ export default function AdminPage() {
 
   const loadUsers = async () => {
     try {
-      // Fetch all users from Appwrite (Admin endpoint)
-      const response = await usersApi.list()
-      
-      // Map basic user data; preferences are only available via server Users.getPrefs
-      const usersList = response.users.map((u) => {
-        const prefs = u.prefs || {} // if server included prefs
-        return {
-          key: u.$id,
-          name: u.name || 'No Name',
-          email: u.email,
-          phone: u.phone || 'N/A',
-          status: u.status ? 'Active' : 'Inactive',
-          verification: u.emailVerification ? 'Verified' : 'Unverified',
-          role: u.labels?.includes('admin') ? 'Admin' : 'User',
-          labels: Array.isArray(u.labels) && u.labels.length ? u.labels.join(', ') : 'None',
-          lastActive: u.accessedAt || u.updatedAt || u.createdAt,
-          joined: u.createdAt,
-          // Preferences (if present on the user object)
-          department: prefs.department || 'N/A',
-          level: prefs.level || 'N/A',
-          matricNumber: prefs.matricNumber || 'N/A',
-          profileCompleted: prefs.profileCompleted ? 'Yes' : 'No'
-        }
-      })
-
-      setUsers(usersList)
-      return usersList
+      // Fetch via secure server API route
+      const res = await fetch(`/api/admin/users?limit=100&page=1`, { cache: 'no-store' })
+      if (!res.ok) {
+        const text = await res.text()
+        console.error('Users API error:', res.status, text)
+        setErrorMsg(`Users API error: ${res.status}`)
+        return []
+      }
+      const data = await res.json()
+      const list = Array.isArray(data.users) ? data.users : []
+      console.log('Loaded users:', list.length)
+      setErrorMsg(null)
+      setUsers(list)
+      return list
     } catch (error) {
       console.error("Error loading users:", error)
+      setErrorMsg(error.message || 'Failed to load users')
       return []
     }
   }
@@ -195,6 +184,12 @@ export default function AdminPage() {
             Manage users, attendance, and system settings
           </p>
         </div>
+
+        {errorMsg && (
+          <div className="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:border-red-900/50">
+            Failed to load users: {errorMsg}
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
