@@ -72,20 +72,42 @@ export default function AdminPage() {
     try {
       // Fetch all users from Appwrite
       const response = await usersApi.list()
-      const usersList = response.users.map(user => ({
-        key: user.$id,
-        name: user.name || 'No Name',
-        email: user.email,
-        role: user.labels?.includes('admin') ? 'Admin' : 'User',
-        status: user.status ? 'Active' : 'Inactive',
-        lastActive: user.accessedAt || user.updatedAt || user.$createdAt
-      }))
       
-      setUsers(usersList)
+      // Get detailed user data including preferences
+      const usersList = await Promise.all(response.users.map(async (user) => {
+        try {
+          // Get user preferences
+          const prefs = await account.getPrefs(user.$id);
+          
+          return {
+            key: user.$id,
+            name: user.name || 'No Name',
+            email: user.email,
+            phone: user.phone || 'N/A',
+            status: user.status === 0 ? 'Active' : 'Inactive',
+            verification: user.emailVerification ? 'Verified' : 'Unverified',
+            role: user.labels?.includes('admin') ? 'Admin' : 'User',
+            labels: user.labels?.join(', ') || 'None',
+            lastActive: user.accessedAt ? new Date(user.accessedAt * 1000).toLocaleString() : 'Never',
+            joined: new Date(user.createdAt * 1000).toLocaleDateString(),
+            // Include preferences if available
+            department: prefs?.department || 'N/A',
+            level: prefs?.level || 'N/A',
+            matricNumber: prefs?.matricNumber || 'N/A',
+            profileCompleted: prefs?.profileCompleted ? 'Yes' : 'No'
+          };
+        } catch (error) {
+          console.error(`Error fetching details for user ${user.$id}:`, error);
+          return null;
+        }
+      }));
+      
+      // Filter out any null entries from failed fetches
+      setUsers(usersList.filter(user => user !== null));
     } catch (error) {
-      console.error("Error loading users:", error)
+      console.error("Error loading users:", error);
     }
-  }
+  };
 
   const loadAdminData = async () => {
     try {
@@ -240,8 +262,15 @@ export default function AdminPage() {
               <TableHeader>
                 <TableColumn key="name">NAME</TableColumn>
                 <TableColumn key="email">EMAIL</TableColumn>
-                <TableColumn key="role">ROLE</TableColumn>
+                <TableColumn key="phone">PHONE</TableColumn>
+                <TableColumn key="matricNumber">MATRIC NO</TableColumn>
+                <TableColumn key="department">DEPARTMENT</TableColumn>
+                <TableColumn key="level">LEVEL</TableColumn>
                 <TableColumn key="status">STATUS</TableColumn>
+                <TableColumn key="verification">VERIFIED</TableColumn>
+                <TableColumn key="role">ROLE</TableColumn>
+                <TableColumn key="labels">LABELS</TableColumn>
+                <TableColumn key="joined">JOINED</TableColumn>
                 <TableColumn key="lastActive">LAST ACTIVE</TableColumn>
               </TableHeader>
               <TableBody items={items}>
