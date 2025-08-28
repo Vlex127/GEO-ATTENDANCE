@@ -14,7 +14,11 @@ import {
   TableRow, 
   TableCell, 
   Pagination,
-  getKeyValue
+  getKeyValue,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem
 } from "@heroui/react"
 
 export default function AdminPage() {
@@ -132,6 +136,27 @@ export default function AdminPage() {
     }
   }
 
+  // Column customization state
+  const allColumns = [
+    { key: 'name', label: 'NAME' },
+    { key: 'email', label: 'EMAIL' },
+    { key: 'phone', label: 'PHONE' },
+    { key: 'matricNumber', label: 'MATRIC NO' },
+    { key: 'department', label: 'DEPARTMENT' },
+    { key: 'level', label: 'LEVEL' },
+    { key: 'status', label: 'STATUS' },
+    { key: 'verification', label: 'VERIFIED' },
+    { key: 'role', label: 'ROLE' },
+    { key: 'labels', label: 'LABELS' },
+    { key: 'joined', label: 'JOINED' },
+    { key: 'lastActive', label: 'LAST ACTIVE' }
+  ]
+  const [visibleColumns, setVisibleColumns] = useState(new Set(allColumns.map(c => c.key)))
+  const columnsToRender = useMemo(() => {
+    if (visibleColumns === 'all') return allColumns
+    return allColumns.filter(c => visibleColumns.has(c.key))
+  }, [visibleColumns])
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -215,6 +240,21 @@ export default function AdminPage() {
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-semibold">User Management</h3>
             <div className="flex gap-2">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button variant="outline" size="sm">Customize Columns</Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Customize columns"
+                  selectionMode="multiple"
+                  selectedKeys={visibleColumns}
+                  onSelectionChange={setVisibleColumns}
+                >
+                  {allColumns.map(col => (
+                    <DropdownItem key={col.key}>{col.label}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
               <Button onClick={handleCreateAdmin}>
                 Add New User
               </Button>
@@ -243,30 +283,21 @@ export default function AdminPage() {
                 wrapper: "min-h-[400px]",
               }}
             >
-              <TableHeader>
-                <TableColumn key="name">NAME</TableColumn>
-                <TableColumn key="email">EMAIL</TableColumn>
-                <TableColumn key="phone">PHONE</TableColumn>
-                <TableColumn key="matricNumber">MATRIC NO</TableColumn>
-                <TableColumn key="department">DEPARTMENT</TableColumn>
-                <TableColumn key="level">LEVEL</TableColumn>
-                <TableColumn key="status">STATUS</TableColumn>
-                <TableColumn key="verification">VERIFIED</TableColumn>
-                <TableColumn key="role">ROLE</TableColumn>
-                <TableColumn key="labels">LABELS</TableColumn>
-                <TableColumn key="joined">JOINED</TableColumn>
-                <TableColumn key="lastActive">LAST ACTIVE</TableColumn>
+              <TableHeader columns={columnsToRender}>
+                {(column) => (
+                  <TableColumn key={column.key}>{column.label}</TableColumn>
+                )}
               </TableHeader>
               <TableBody items={items}>
                 {(item) => (
                   <TableRow key={item.key}>
-                    {(columnKey) => (
-                      <TableCell>
-                        {((columnKey === 'lastActive') || (columnKey === 'joined')) && item[columnKey]
-                           ? new Date(item[columnKey]).toLocaleString() 
-                           : getKeyValue(item, columnKey)}
+                    {columnsToRender.map((col) => (
+                      <TableCell key={col.key}>
+                        {((col.key === 'lastActive') || (col.key === 'joined')) && item[col.key]
+                          ? new Date(item[col.key]).toLocaleString()
+                          : getKeyValue(item, col.key)}
                       </TableCell>
-                    )}
+                    ))}
                   </TableRow>
                 )}
               </TableBody>
