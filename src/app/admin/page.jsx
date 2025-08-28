@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { account } from "@/lib/appwrite"
+import { account, users as usersApi } from "@/lib/appwrite"
 import { adminService } from "@/lib/database"
 import { authStatsService } from "@/lib/auth-stats"
 import { Button } from "@/components/ui/button"
@@ -19,49 +19,28 @@ import {
   getKeyValue
 } from "@heroui/react"
 
-// Sample user data (replace with actual data from your API)
-const users = [
-  {
-    key: "1",
-    name: "Tony Reichert",
-    role: "Admin",
-    status: "Active",
-    email: "tony@example.com",
-    lastActive: "2025-08-27T10:30:00Z"
-  },
-  {
-    key: "2",
-    name: "Zoey Lang",
-    role: "Staff",
-    status: "Active",
-    email: "zoey@example.com",
-    lastActive: "2025-08-27T09:15:00Z"
-  },
-  // Add more sample users as needed
-]
-
 export default function AdminPage() {
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
-  const [rowsPerPage] = useState(5)
+  const [rowsPerPage] = useState(10)
+  const [users, setUsers] = useState([])
   const [stats, setStats] = useState({
     totalAdmins: 0,
     totalUsers: 0,
     activeUsers: 0,
     note: ""
   })
-  const [userProfiles, setUserProfiles] = useState([])
   const router = useRouter()
 
   // Calculate pagination
-  const pages = Math.ceil(userProfiles.length / rowsPerPage)
+  const pages = Math.ceil(users.length / rowsPerPage)
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage
     const end = start + rowsPerPage
-    return userProfiles.slice(start, end)
-  }, [page, userProfiles, rowsPerPage])
+    return users.slice(start, end)
+  }, [page, users, rowsPerPage])
 
   useEffect(() => {
     checkAdminAuth()
@@ -70,16 +49,17 @@ export default function AdminPage() {
   const checkAdminAuth = async () => {
     try {
       const currentUser = await account.get()
-      const adminStatus = await adminService.isAdmin(currentUser.$id)
+      const isUserAdmin = currentUser.labels && currentUser.labels.includes('admin')
       
-      if (!adminStatus) {
+      if (!isUserAdmin) {
         router.push("/home")
         return
       }
       
       setUser(currentUser)
       setIsAdmin(true)
-      loadAdminData()
+      await loadUsers()
+      await loadAdminData()
     } catch (error) {
       console.error("Auth error:", error)
       router.push("/login")
@@ -88,19 +68,38 @@ export default function AdminPage() {
     }
   }
 
+  const loadUsers = async () => {
+    try {
+      // Fetch all users from Appwrite
+      const response = await usersApi.list()
+      const usersList = response.users.map(user => ({
+        key: user.$id,
+        name: user.name || 'No Name',
+        email: user.email,
+        role: user.labels?.includes('admin') ? 'Admin' : 'User',
+        status: user.status ? 'Active' : 'Inactive',
+        lastActive: user.accessedAt || user.updatedAt || user.$createdAt
+      }))
+      
+      setUsers(usersList)
+    } catch (error) {
+      console.error("Error loading users:", error)
+    }
+  }
+
   const loadAdminData = async () => {
     try {
-      // Load admin list
-      const adminList = await adminService.listAdmins()
-      setUserProfiles(adminList)
-      
-      // Load simplified stats
+      // Fetch admin stats
       const authStats = await authStatsService.getStats()
+      
+      // Count admins from the users list
+      const adminCount = users.filter(u => u.role === 'Admin').length
+      
       setStats({
-        ...stats,
-        totalAdmins: authStats.totalAdmins || 1,
-        totalUsers: authStats.totalUsers || userProfiles.length,
-        activeUsers: authStats.activeUsers || Math.floor(userProfiles.length * 0.8)
+        totalAdmins: adminCount,
+        totalUsers: users.length,
+        activeUsers: users.filter(u => u.status === 'Active').length,
+        note: ""
       })
     } catch (error) {
       console.error("Error loading admin data:", error)
@@ -119,6 +118,18 @@ export default function AdminPage() {
   const handleCreateAdmin = async () => {
     // This would open a modal or form to create new admin
     alert("Create admin functionality - to be implemented")
+  }
+
+  const handleRefresh = async () => {
+    setIsLoading(true)
+    try {
+      await loadUsers()
+      await loadAdminData()
+    } catch (error) {
+      console.error("Error refreshing data:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (isLoading) {
@@ -152,8 +163,11 @@ export default function AdminPage() {
             <h1 className="text-xl font-bold">LASU AMS - ADMIN PANEL</h1>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              Refresh Data
+            </Button>
             <span className="text-sm text-muted-foreground">
-              Admin: {user.name || user.email}
+              {user?.name || user?.email}
             </span>
             <ThemeToggle />
             <Button variant="outline" onClick={handleLogout}>
@@ -181,7 +195,7 @@ export default function AdminPage() {
           <Card className="p-6">
             <h3 className="font-semibold mb-2">Active Users</h3>
             <p className="text-2xl font-bold text-green-600">{stats.activeUsers}</p>
-            <p className="text-sm text-muted-foreground">Active in last 24h</p>
+            <p className="text-sm text-muted-foreground">Currently active</p>
           </Card>
           <Card className="p-6">
             <h3 className="font-semibold mb-2">Administrators</h3>
@@ -194,26 +208,30 @@ export default function AdminPage() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-semibold">User Management</h3>
-            <Button onClick={handleCreateAdmin}>
-              Add New User
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleCreateAdmin}>
+                Add New User
+              </Button>
+            </div>
           </div>
 
           <Card className="p-6">
             <Table
               aria-label="User management table"
               bottomContent={
-                <div className="flex w-full justify-center">
-                  <Pagination
-                    isCompact
-                    showControls
-                    showShadow
-                    color="primary"
-                    page={page}
-                    total={pages}
-                    onChange={(page) => setPage(page)}
-                  />
-                </div>
+                pages > 1 && (
+                  <div className="flex w-full justify-center">
+                    <Pagination
+                      isCompact
+                      showControls
+                      showShadow
+                      color="primary"
+                      page={page}
+                      total={pages}
+                      onChange={(page) => setPage(page)}
+                    />
+                  </div>
+                )
               }
               classNames={{
                 wrapper: "min-h-[400px]",
@@ -228,10 +246,10 @@ export default function AdminPage() {
               </TableHeader>
               <TableBody items={items}>
                 {(item) => (
-                  <TableRow key={item.$id}>
+                  <TableRow key={item.key}>
                     {(columnKey) => (
                       <TableCell>
-                        {columnKey === 'lastActive' 
+                        {columnKey === 'lastActive' && item[columnKey]
                           ? new Date(item[columnKey]).toLocaleString() 
                           : getKeyValue(item, columnKey)}
                       </TableCell>
