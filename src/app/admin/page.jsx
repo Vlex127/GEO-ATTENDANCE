@@ -3,8 +3,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { account, users as usersApi } from "@/lib/appwrite"
-import { adminService } from "@/lib/database"
-import { authStatsService } from "@/lib/auth-stats"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -58,8 +56,8 @@ export default function AdminPage() {
       
       setUser(currentUser)
       setIsAdmin(true)
-      await loadUsers()
-      await loadAdminData()
+      const list = await loadUsers()
+      await loadAdminData(list)
     } catch (error) {
       console.error("Auth error:", error)
       router.push("/login")
@@ -70,57 +68,48 @@ export default function AdminPage() {
 
   const loadUsers = async () => {
     try {
-      // Fetch all users from Appwrite
+      // Fetch all users from Appwrite (Admin endpoint)
       const response = await usersApi.list()
       
-      // Get detailed user data including preferences
-      const usersList = await Promise.all(response.users.map(async (user) => {
-        try {
-          // Get user preferences
-          const prefs = await account.getPrefs(user.$id);
-          
-          return {
-            key: user.$id,
-            name: user.name || 'No Name',
-            email: user.email,
-            phone: user.phone || 'N/A',
-            status: user.status === 0 ? 'Active' : 'Inactive',
-            verification: user.emailVerification ? 'Verified' : 'Unverified',
-            role: user.labels?.includes('admin') ? 'Admin' : 'User',
-            labels: user.labels?.join(', ') || 'None',
-            lastActive: user.accessedAt ? new Date(user.accessedAt * 1000).toLocaleString() : 'Never',
-            joined: new Date(user.createdAt * 1000).toLocaleDateString(),
-            // Include preferences if available
-            department: prefs?.department || 'N/A',
-            level: prefs?.level || 'N/A',
-            matricNumber: prefs?.matricNumber || 'N/A',
-            profileCompleted: prefs?.profileCompleted ? 'Yes' : 'No'
-          };
-        } catch (error) {
-          console.error(`Error fetching details for user ${user.$id}:`, error);
-          return null;
+      // Map basic user data; preferences are only available via server Users.getPrefs
+      const usersList = response.users.map((u) => {
+        const prefs = u.prefs || {} // if server included prefs
+        return {
+          key: u.$id,
+          name: u.name || 'No Name',
+          email: u.email,
+          phone: u.phone || 'N/A',
+          status: u.status ? 'Active' : 'Inactive',
+          verification: u.emailVerification ? 'Verified' : 'Unverified',
+          role: u.labels?.includes('admin') ? 'Admin' : 'User',
+          labels: Array.isArray(u.labels) && u.labels.length ? u.labels.join(', ') : 'None',
+          lastActive: u.accessedAt || u.updatedAt || u.createdAt,
+          joined: u.createdAt,
+          // Preferences (if present on the user object)
+          department: prefs.department || 'N/A',
+          level: prefs.level || 'N/A',
+          matricNumber: prefs.matricNumber || 'N/A',
+          profileCompleted: prefs.profileCompleted ? 'Yes' : 'No'
         }
-      }));
-      
-      // Filter out any null entries from failed fetches
-      setUsers(usersList.filter(user => user !== null));
-    } catch (error) {
-      console.error("Error loading users:", error);
-    }
-  };
+      })
 
-  const loadAdminData = async () => {
+      setUsers(usersList)
+      return usersList
+    } catch (error) {
+      console.error("Error loading users:", error)
+      return []
+    }
+  }
+
+  const loadAdminData = async (list) => {
     try {
-      // Fetch admin stats
-      const authStats = await authStatsService.getStats()
-      
-      // Count admins from the users list
-      const adminCount = users.filter(u => u.role === 'Admin').length
-      
+      const source = Array.isArray(list) ? list : users
+      const adminCount = source.filter(u => u.role === 'Admin').length
+
       setStats({
         totalAdmins: adminCount,
-        totalUsers: users.length,
-        activeUsers: users.filter(u => u.status === 'Active').length,
+        totalUsers: source.length,
+        activeUsers: source.filter(u => u.status === 'Active').length,
         note: ""
       })
     } catch (error) {
@@ -145,8 +134,8 @@ export default function AdminPage() {
   const handleRefresh = async () => {
     setIsLoading(true)
     try {
-      await loadUsers()
-      await loadAdminData()
+      const list = await loadUsers()
+      await loadAdminData(list)
     } catch (error) {
       console.error("Error refreshing data:", error)
     } finally {
@@ -278,9 +267,9 @@ export default function AdminPage() {
                   <TableRow key={item.key}>
                     {(columnKey) => (
                       <TableCell>
-                        {columnKey === 'lastActive' && item[columnKey]
-                          ? new Date(item[columnKey]).toLocaleString() 
-                          : getKeyValue(item, columnKey)}
+                        {((columnKey === 'lastActive') || (columnKey === 'joined')) && item[columnKey]
+                           ? new Date(item[columnKey]).toLocaleString() 
+                           : getKeyValue(item, columnKey)}
                       </TableCell>
                     )}
                   </TableRow>
