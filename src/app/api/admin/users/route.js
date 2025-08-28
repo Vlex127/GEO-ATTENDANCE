@@ -1,8 +1,15 @@
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 import { NextResponse } from "next/server"
 import { Client, Users, Query } from "node-appwrite"
 
 export async function GET(request) {
   try {
+    if (!process.env.APPWRITE_API_KEY) {
+      return NextResponse.json({ error: "Missing APPWRITE_API_KEY" }, { status: 500 })
+    }
+
     const { searchParams } = new URL(request.url)
     const page = Number(searchParams.get("page") || 1)
     const limit = Number(searchParams.get("limit") || 50)
