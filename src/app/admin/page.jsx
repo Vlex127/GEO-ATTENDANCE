@@ -131,7 +131,28 @@ export default function AdminPage() {
       return [];
     }
   };
-
+const handleExportCSV = () => {
+    const headers = allColumns
+      .filter((c) => visibleColumns.has(c.key))
+      .map((c) => c.label)
+      .join(",");
+    const rows = filteredAndSortedUsers
+      .map((user) =>
+        allColumns
+          .filter((c) => visibleColumns.has(c.key))
+          .map((c) => `"${user[c.key]?.toString().replace(/"/g, '""') || ""}"`)
+          .join(",")
+      )
+      .join("\n");
+    const csv = `${headers}\n${rows}`;
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const loadAdminData = (list) => {
     const source = Array.isArray(list) ? list : users;
     const adminCount = source.filter((u) => u.role === "Admin").length;
