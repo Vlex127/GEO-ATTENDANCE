@@ -42,6 +42,7 @@ import {
   RefreshCw,
   ArrowUpDown,
   XCircle,
+  X,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +83,10 @@ export default function AdminPage() {
     direction: "asc",
   });
   const [filters, setFilters] = useState({});
+
+  // 1. Add pagination state
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     checkAdminAuth();
@@ -131,7 +136,8 @@ export default function AdminPage() {
       return [];
     }
   };
-const handleExportCSV = () => {
+
+  const handleExportCSV = () => {
     const headers = allColumns
       .filter((c) => visibleColumns.has(c.key))
       .map((c) => c.label)
@@ -153,6 +159,7 @@ const handleExportCSV = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
   const loadAdminData = (list) => {
     const source = Array.isArray(list) ? list : users;
     const adminCount = source.filter((u) => u.role === "Admin").length;
@@ -211,6 +218,13 @@ const handleExportCSV = () => {
 
     return result;
   }, [users, searchQuery, filters, sortDescriptor]);
+
+  // 2. Add pagination logic
+  const paginatedUsers = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredAndSortedUsers.slice(start, end);
+  }, [page, filteredAndSortedUsers, rowsPerPage]);
 
   const handleSort = (key) => {
     setSortDescriptor((prev) => {
@@ -454,8 +468,9 @@ const handleExportCSV = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAndSortedUsers.length > 0 ? (
-                      filteredAndSortedUsers.map((item) => (
+                    {/* 3. Use paginatedUsers for rendering */}
+                    {paginatedUsers.length > 0 ? (
+                      paginatedUsers.map((item) => (
                         <TableRow key={item.$id}>
                           {allColumns
                             .filter((c) => visibleColumns.has(c.key))
@@ -483,18 +498,46 @@ const handleExportCSV = () => {
                 </Table>
               </div>
             </div>
-            <div className="mt-4 flex justify-end">
-              <Select onValueChange={(value) => setRowsPerPage(Number(value))} value={rowsPerPage.toString()}>
-                <SelectTrigger className="w-auto">
-                  <SelectValue placeholder="Rows per page" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                {/* 4. Display pagination info */}
+                <span>
+                  Showing {paginatedUsers.length} of {filteredAndSortedUsers.length} users
+                </span>
+                <Select onValueChange={(value) => {
+                  setRowsPerPage(Number(value));
+                  setPage(1); // Reset to page 1 when rowsPerPage changes
+                }} value={rowsPerPage.toString()}>
+                  <SelectTrigger className="w-auto">
+                    <SelectValue placeholder="Rows per page" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* 5. Add pagination controls */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(prev => prev + 1)}
+                  disabled={page === Math.ceil(filteredAndSortedUsers.length / rowsPerPage)}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
