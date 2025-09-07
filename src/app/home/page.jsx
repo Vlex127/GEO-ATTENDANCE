@@ -1,99 +1,140 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { useAuth } from "@/hooks/useAuth"
-import { 
-  Clock, 
-  MapPin, 
-  Calendar, 
-  TrendingUp, 
-  LogIn, 
-  LogOut, 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Clock,
+  MapPin,
+  Calendar,
+  TrendingUp,
+  LogIn,
+  LogOut,
   User,
   Activity,
   CheckCircle,
-  AlertCircle
-} from "lucide-react"
+  AlertCircle,
+} from "lucide-react";
+import { useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion"; // For smooth animations
+import type { User } from "@/types/auth"; // Assuming a User type is defined
+
+interface ActivityItem {
+  action: string;
+  time: string;
+  status: "success" | "error";
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+// Helper functions
+const getTimeOfDay = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Morning";
+  if (hour < 17) return "Afternoon";
+  return "Evening";
+};
+
+const getCurrentTime = (): string =>
+  new Date().toLocaleTimeString("en-US", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 export default function HomePage() {
-  const { user, isLoading, error, logout } = useAuth()
+  const { user, isLoading, error, logout } = useAuth();
+  const focusRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus logout button on mount for accessibility
+  useEffect(() => {
+    focusRef.current?.focus();
+  }, []);
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
-        <div className="text-center space-y-4">
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-950">
+        <motion.div
+          className="text-center space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="relative">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 dark:border-gray-800 mx-auto"></div>
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-black dark:border-white border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
           </div>
           <p className="text-gray-500 dark:text-gray-400 animate-pulse">Loading your dashboard...</p>
-        </div>
+        </motion.div>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
-        <div className="text-center space-y-4 max-w-md mx-auto p-6">
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-950">
+        <motion.div
+          className="text-center space-y-4 max-w-md mx-auto p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900 rounded-full flex items-center justify-center mx-auto">
-            <AlertCircle className="w-8 h-8 text-black dark:text-white" />
+            <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-black dark:text-white mb-2">Connection Error</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Connection Error</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Redirecting to login...</p>
           </div>
-        </div>
+        </motion.div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return null // Will redirect to login
+    return null; // Will redirect to login
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-black/70 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-gray-950/80 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <img 
-                  src="/lasu.png" 
-                  alt="LASU" 
-                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg shadow-sm" 
+                <img
+                  src="/lasu.png"
+                  alt="LASU logo"
+                  className="h-10 w-10 rounded-lg shadow-sm"
+                  loading="lazy"
                 />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-black dark:bg-white rounded-full border-2 border-white dark:border-black animate-pulse"></div>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-white dark:border-gray-950 animate-pulse" aria-hidden="true"></span>
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-black dark:text-white">
-                  LASU AMS
-                </h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">LASU AMS</h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">Geo Attendance System</p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-900 rounded-full">
-                <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                <span className="text-sm font-medium truncate max-w-32 text-black dark:text-white">
+                <User className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                <span className="text-sm font-medium truncate max-w-32 text-gray-900 dark:text-white">
                   {user.name || user.email}
                 </span>
               </div>
               <ThemeToggle />
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={logout}
-                className="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-gray-900 dark:hover:border-gray-700 transition-colors"
+                ref={focusRef}
+                className="hover:bg-gray-100 dark:hover:bg-gray-900 border-gray-300 dark:border-gray-700 transition-colors focus:ring-2 focus:ring-primary"
+                aria-label="Logout"
               >
-                <LogOut className="w-4 h-4 sm:mr-2" />
+                <LogOut className="w-4 h-4 sm:mr-2" aria-hidden="true" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>
             </div>
@@ -101,196 +142,222 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="mb-6 sm:mb-8">
+        <motion.section
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black dark:text-white mb-2">
-                Good {getTimeOfDay()}, {user.name?.split(' ')[0] || 'User'}! 👋
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Good {getTimeOfDay()}, {user.name?.split(" ")[0] || "User"}! 👋
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
-                Track your attendance with our location-based system
-              </p>
+              <p className="text-gray-500 dark:text-gray-400 text-base">Track your attendance with our location-based system</p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 px-3 py-2 rounded-full border border-gray-200 dark:border-gray-800">
-              <Clock className="w-4 h-4" />
-              <span className="font-mono">{getCurrentTime()}</span>
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded-full border border-gray-200 dark:border-gray-800">
+              <Clock className="w-4 h-4" aria-hidden="true" />
+              <span className="font-mono" aria-live="polite">{getCurrentTime()}</span>
             </div>
           </div>
-        </div>
+        </motion.section>
 
         {/* Status Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6 sm:mb-8">
-          <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gray-100 dark:bg-gray-900 rounded-full -translate-y-12 translate-x-12 opacity-30"></div>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-black dark:text-white" />
-                </div>
-                Today's Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-2xl sm:text-3xl font-bold text-black dark:text-white">Checked Out</p>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-700 text-black dark:text-white">
-                    <div className="w-2 h-2 bg-black dark:bg-white rounded-full mr-1 animate-pulse"></div>
+        <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          {[
+            {
+              title: "Today's Status",
+              icon: CheckCircle,
+              content: (
+                <>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">Checked Out</p>
+                  <Badge
+                    variant="outline"
+                    className="text-xs border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <span className="w-2 h-2 bg-primary rounded-full mr-1 animate-pulse" aria-hidden="true"></span>
                     Ready to check in
                   </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gray-100 dark:bg-gray-900 rounded-full -translate-y-12 translate-x-12 opacity-30"></div>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-black dark:text-white" />
-                </div>
-                This Week
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-2xl sm:text-3xl font-bold text-black dark:text-white">4/5 Days</p>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-full h-2">
-                    <div className="bg-black dark:bg-white h-2 rounded-full" style={{ width: '80%' }}></div>
+                </>
+              ),
+            },
+            {
+              title: "This Week",
+              icon: Calendar,
+              content: (
+                <>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">4/5 Days</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-full h-2">
+                      <motion.div
+                        className="bg-primary h-2 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: "80%" }}
+                        transition={{ duration: 0.5 }}
+                      ></motion.div>
+                    </div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">80%</span>
                   </div>
-                  <span className="text-sm font-medium text-black dark:text-white">80%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-800 bg-white dark:bg-black sm:col-span-2 lg:col-span-1">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gray-100 dark:bg-gray-900 rounded-full -translate-y-12 translate-x-12 opacity-30"></div>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-black dark:text-white" />
-                </div>
-                Total Hours
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-2xl sm:text-3xl font-bold text-black dark:text-white">32.5 hrs</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">This week</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </>
+              ),
+            },
+            {
+              title: "Total Hours",
+              icon: TrendingUp,
+              content: (
+                <>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">32.5 hrs</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">This week</p>
+                </>
+              ),
+            },
+          ].map((card, index) => (
+            <motion.div
+              key={index}
+              className="relative overflow-hidden group hover:shadow-lg transition-shadow duration-300 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <Card>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gray-100 dark:bg-gray-900 rounded-full -translate-y-12 translate-x-12 opacity-30" aria-hidden="true"></div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center">
+                      <card.icon className="w-4 h-4 text-gray-900 dark:text-white" aria-hidden="true" />
+                    </div>
+                    {card.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">{card.content}</CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </section>
 
         {/* Quick Actions */}
-        <div className="mb-6 sm:mb-8">
-          <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-black dark:text-white">Quick Actions</h3>
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
-            <Button 
-              size="lg" 
-              className="h-20 sm:h-24 flex-col gap-2 sm:gap-3 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 text-white dark:text-black border-0 group relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gray-800 dark:bg-gray-200 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-              <div className="relative flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <LogIn className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div className="text-center">
-                  <span className="text-base sm:text-lg font-semibold">Check In</span>
-                  <span className="text-xs sm:text-sm opacity-90 block">Mark your arrival at the location</span>
-                </div>
-              </div>
-            </Button>
-            
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="h-20 sm:h-24 flex-col gap-2 sm:gap-3 border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 shadow-md hover:shadow-lg transition-all duration-300 group relative overflow-hidden text-black dark:text-white"
-            >
-              <div className="absolute inset-0 bg-gray-50 dark:bg-gray-900 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-              <div className="relative flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <LogOut className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div className="text-center">
-                  <span className="text-base sm:text-lg font-semibold">Check Out</span>
-                  <span className="text-xs sm:text-sm opacity-75 block">Mark your departure from location</span>
-                </div>
-              </div>
-            </Button>
+        <section className="mb-8">
+          <h3 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
+            {[
+              {
+                label: "Check In",
+                icon: [LogIn, MapPin],
+                description: "Mark your arrival at the location",
+                variant: "default",
+                className:
+                  "bg-primary hover:bg-primary/90 text-white dark:text-gray-900 shadow-lg hover:shadow-xl border-0",
+              },
+              {
+                label: "Check Out",
+                icon: [LogOut, MapPin],
+                description: "Mark your departure from location",
+                variant: "outline",
+                className:
+                  "border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-900 dark:text-white shadow-md hover:shadow-lg",
+              },
+            ].map((action, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <Button
+                  size="lg"
+                  variant={action.variant as "default" | "outline"}
+                  className={`h-24 flex-col gap-3 relative overflow-hidden group transition-all duration-300 ${action.className}`}
+                  aria-label={action.label}
+                >
+                  <div className="absolute inset-0 bg-gray-100 dark:bg-gray-900 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                  <div className="relative flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      {action.icon.map((Icon, i) => (
+                        <Icon
+                          key={i}
+                          className={`w-${i === 0 ? "6" : "5"} h-${i === 0 ? "6" : "5"}`}
+                          aria-hidden="true"
+                        />
+                      ))}
+                    </div>
+                    <div className="text-center">
+                      <span className="text-lg font-semibold">{action.label}</span>
+                      <span className="text-sm opacity-75 block">{action.description}</span>
+                    </div>
+                  </div>
+                </Button>
+              </motion.div>
+            ))}
           </div>
-        </div>
+        </section>
 
         {/* Recent Activity */}
-        <div>
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="text-xl sm:text-2xl font-semibold text-black dark:text-white">Recent Activity</h3>
-            <Button variant="ghost" size="sm" className="text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white">
-              <Activity className="w-4 h-4 mr-2" />
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              aria-label="View all activities"
+            >
+              <Activity className="w-4 h-4 mr-2" aria-hidden="true" />
               View All
             </Button>
           </div>
-          
-          <div className="space-y-3 sm:space-y-4">
-            {[
-              { action: "Checked Out", time: "Yesterday at 5:30 PM", status: "success", icon: LogOut },
-              { action: "Checked In", time: "Yesterday at 9:00 AM", status: "success", icon: LogIn },
-              { action: "Checked Out", time: "2 days ago at 6:15 PM", status: "success", icon: LogOut },
-            ].map((activity, index) => (
-              <Card 
-                key={index} 
-                className="transition-all duration-300 hover:shadow-md border-l-4 border-l-black dark:border-l-white bg-white dark:bg-black border border-gray-200 dark:border-gray-800"
-              >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 dark:bg-gray-900 rounded-full flex items-center justify-center">
-                        <activity.icon className="w-5 h-5 sm:w-6 sm:h-6 text-black dark:text-white" />
+          <div className="space-y-4">
+            <AnimatePresence>
+              {[
+                { action: "Checked Out", time: "Yesterday at 5:30 PM", status: "success", icon: LogOut },
+                { action: "Checked In", time: "Yesterday at 9:00 AM", status: "success", icon: LogIn },
+                { action: "Checked Out", time: "2 days ago at 6:15 PM", status: "success", icon: LogOut },
+              ].map((activity: ActivityItem, index: number) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <Card className="transition-shadow duration-300 hover:shadow-md border-l-4 border-l-primary bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-900 rounded-full flex items-center justify-center">
+                            <activity.icon className="w-6 h-6 text-gray-900 dark:text-white" aria-hidden="true" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-base text-gray-900 dark:text-white">{activity.action}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" aria-hidden="true" />
+                              <time dateTime={activity.time}>{activity.time}</time>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle
+                            className="w-6 h-6 text-green-600 dark:text-green-400"
+                            aria-hidden="true"
+                          />
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white hidden sm:flex"
+                          >
+                            Verified
+                          </Badge>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-sm sm:text-base text-black dark:text-white">{activity.action}</p>
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {activity.time}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-black dark:text-white" />
-                      <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-700 text-black dark:text-white hidden sm:flex">
-                        Verified
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
-        </div>
+        </section>
       </main>
     </div>
-  )
-}
-
-// Helper functions
-function getTimeOfDay() {
-  const hour = new Date().getHours()
-  if (hour < 12) return "Morning"
-  if (hour < 17) return "Afternoon"
-  return "Evening"
-}
-
-function getCurrentTime() {
-  return new Date().toLocaleTimeString('en-US', { 
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  );
 }
