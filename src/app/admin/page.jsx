@@ -169,19 +169,18 @@ export default function AdminPage() {
 
   const resetTablePreferences = () => {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
       
       // Reset all state to defaults
-      setVisibleColumns(new Set(defaultTableState.visibleColumns));
-      setSortDescriptor(defaultTableState.sortDescriptor);
-      setFilters(defaultTableState.filters);
-      setPage(defaultTableState.page);
-      setRowsPerPage(defaultTableState.rowsPerPage);
-      setSearchQuery(defaultTableState.searchQuery);
+      resetToDefaults();
       
       console.log("Table preferences reset to defaults");
     } catch (error) {
       console.error("Failed to reset table preferences:", error);
+      // Still reset to defaults even if localStorage removal fails
+      resetToDefaults();
     }
   };
 
