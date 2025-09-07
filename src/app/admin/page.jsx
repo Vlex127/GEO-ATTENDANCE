@@ -169,8 +169,9 @@ export default function AdminPage() {
 
   const resetTablePreferences = () => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem(STORAGE_KEY);
+      const storage = getStorage();
+      if (storage) {
+        storage.removeItem(STORAGE_KEY);
       }
       
       // Reset all state to defaults
@@ -179,7 +180,7 @@ export default function AdminPage() {
       console.log("Table preferences reset to defaults");
     } catch (error) {
       console.error("Failed to reset table preferences:", error);
-      // Still reset to defaults even if localStorage removal fails
+      // Still reset to defaults even if storage removal fails
       resetToDefaults();
     }
   };
