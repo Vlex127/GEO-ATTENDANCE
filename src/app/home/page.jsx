@@ -18,25 +18,16 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion"; // For smooth animations
-import type { User } from "@/types/auth"; // Assuming a User type is defined
+import { motion, AnimatePresence } from "framer-motion";
 
-interface ActivityItem {
-  action: string;
-  time: string;
-  status: "success" | "error";
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-// Helper functions
-const getTimeOfDay = (): string => {
+const getTimeOfDay = () => {
   const hour = new Date().getHours();
   if (hour < 12) return "Morning";
   if (hour < 17) return "Afternoon";
   return "Evening";
 };
 
-const getCurrentTime = (): string =>
+const getCurrentTime = () =>
   new Date().toLocaleTimeString("en-US", {
     hour12: false,
     hour: "2-digit",
@@ -45,9 +36,8 @@ const getCurrentTime = (): string =>
 
 export default function HomePage() {
   const { user, isLoading, error, logout } = useAuth();
-  const focusRef = useRef<HTMLButtonElement>(null);
+  const focusRef = useRef(null);
 
-  // Auto-focus logout button on mount for accessibility
   useEffect(() => {
     focusRef.current?.focus();
   }, []);
@@ -94,12 +84,11 @@ export default function HomePage() {
   }
 
   if (!user) {
-    return null; // Will redirect to login
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-gray-950/80 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex justify-between items-center">
@@ -143,7 +132,6 @@ export default function HomePage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
         <motion.section
           className="mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -164,7 +152,6 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        {/* Status Cards */}
         <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
           {[
             {
@@ -238,7 +225,6 @@ export default function HomePage() {
           ))}
         </section>
 
-        {/* Quick Actions */}
         <section className="mb-8">
           <h3 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
@@ -268,7 +254,7 @@ export default function HomePage() {
               >
                 <Button
                   size="lg"
-                  variant={action.variant as "default" | "outline"}
+                  variant={action.variant}
                   className={`h-24 flex-col gap-3 relative overflow-hidden group transition-all duration-300 ${action.className}`}
                   aria-label={action.label}
                 >
@@ -294,7 +280,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Recent Activity */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
@@ -314,7 +299,7 @@ export default function HomePage() {
                 { action: "Checked Out", time: "Yesterday at 5:30 PM", status: "success", icon: LogOut },
                 { action: "Checked In", time: "Yesterday at 9:00 AM", status: "success", icon: LogIn },
                 { action: "Checked Out", time: "2 days ago at 6:15 PM", status: "success", icon: LogOut },
-              ].map((activity: ActivityItem, index: number) => (
+              ].map((activity, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
