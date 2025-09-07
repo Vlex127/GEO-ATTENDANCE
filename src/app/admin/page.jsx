@@ -43,6 +43,7 @@ import {
   ArrowUpDown,
   XCircle,
   X,
+  RotateCcw,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,19 @@ const allColumns = [
   { key: "lastActive", label: "Last Active", sortable: true },
 ];
 
+// Default state configuration
+const defaultTableState = {
+  visibleColumns: new Set(allColumns.map((c) => c.key)),
+  sortDescriptor: { column: "name", direction: "asc" },
+  filters: {},
+  page: 1,
+  rowsPerPage: 10,
+  searchQuery: "",
+};
+
+// Storage key for persisting state
+const STORAGE_KEY = "admin-table-preferences";
+
 export default function AdminPage() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -73,20 +87,103 @@ export default function AdminPage() {
     totalUsers: 0,
     activeUsers: 0,
   });
-  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
-  const [visibleColumns, setVisibleColumns] = useState(
-    new Set(allColumns.map((c) => c.key))
-  );
-  const [sortDescriptor, setSortDescriptor] = useState({
-    column: "name",
-    direction: "asc",
-  });
-  const [filters, setFilters] = useState({});
 
-  // 1. Add pagination state
-  const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  // Table state with persistence
+  const [searchQuery, setSearchQuery] = useState(defaultTableState.searchQuery);
+  const [visibleColumns, setVisibleColumns] = useState(defaultTableState.visibleColumns);
+  const [sortDescriptor, setSortDescriptor] = useState(defaultTableState.sortDescriptor);
+  const [filters, setFilters] = useState(defaultTableState.filters);
+  const [page, setPage] = useState(defaultTableState.page);
+  const [rowsPerPage, setRowsPerPage] = useState(defaultTableState.rowsPerPage);
+
+  // Load saved preferences on component mount
+  useEffect(() => {
+    loadTablePreferences();
+  }, []);
+
+  // Save preferences whenever state changes
+  useEffect(() => {
+    saveTablePreferences();
+  }, [visibleColumns, sortDescriptor, filters, page, rowsPerPage, searchQuery]);
+
+  const loadTablePreferences = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const preferences = JSON.parse(saved);
+        
+        // Restore visible columns (convert array back to Set)
+        if (preferences.visibleColumns) {
+          setVisibleColumns(new Set(preferences.visibleColumns));
+        }
+        
+        // Restore sort descriptor
+        if (preferences.sortDescriptor) {
+          setSortDescriptor(preferences.sortDescriptor);
+        }
+        
+        // Restore filters
+        if (preferences.filters) {
+          setFilters(preferences.filters);
+        }
+        
+        // Restore pagination
+        if (preferences.page) {
+          setPage(preferences.page);
+        }
+        
+        if (preferences.rowsPerPage) {
+          setRowsPerPage(preferences.rowsPerPage);
+        }
+        
+        // Restore search query
+        if (preferences.searchQuery !== undefined) {
+          setSearchQuery(preferences.searchQuery);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load table preferences:", error);
+      // If loading fails, use defaults - no need to show error to user
+    }
+  };
+
+  const saveTablePreferences = () => {
+    try {
+      const preferences = {
+        visibleColumns: Array.from(visibleColumns), // Convert Set to array for storage
+        sortDescriptor,
+        filters,
+        page,
+        rowsPerPage,
+        searchQuery,
+        lastSaved: new Date().toISOString(),
+      };
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+    } catch (error) {
+      console.error("Failed to save table preferences:", error);
+      // Fail silently - don't interrupt user experience
+    }
+  };
+
+  const resetTablePreferences = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      
+      // Reset all state to defaults
+      setVisibleColumns(new Set(defaultTableState.visibleColumns));
+      setSortDescriptor(defaultTableState.sortDescriptor);
+      setFilters(defaultTableState.filters);
+      setPage(defaultTableState.page);
+      setRowsPerPage(defaultTableState.rowsPerPage);
+      setSearchQuery(defaultTableState.searchQuery);
+      
+      console.log("Table preferences reset to defaults");
+    } catch (error) {
+      console.error("Failed to reset table preferences:", error);
+    }
+  };
 
   useEffect(() => {
     checkAdminAuth();
@@ -187,6 +284,24 @@ export default function AdminPage() {
     setIsLoading(false);
   };
 
+  // Enhanced search handler that resets page and saves state
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setPage(1); // Reset to first page when searching
+  };
+
+  // Enhanced filter handler that resets page
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPage(1); // Reset to first page when filtering
+  };
+
+  // Enhanced rows per page handler
+  const handleRowsPerPageChange = (value) => {
+    setRowsPerPage(Number(value));
+    setPage(1); // Reset to first page when changing rows per page
+  };
+
   const filteredAndSortedUsers = useMemo(() => {
     let result = [...users];
 
@@ -219,7 +334,6 @@ export default function AdminPage() {
     return result;
   }, [users, searchQuery, filters, sortDescriptor]);
 
-  // 2. Add pagination logic
   const paginatedUsers = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
@@ -372,7 +486,7 @@ export default function AdminPage() {
                   <Input
                     placeholder="Search users..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-9"
                   />
                 </div>
@@ -401,6 +515,9 @@ export default function AdminPage() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <Button variant="outline" size="sm" onClick={resetTablePreferences} title="Reset table to default settings">
+                  <RotateCcw className="w-4 h-4 mr-2" /> Reset
+                </Button>
                 <Button variant="outline" size="sm" onClick={handleExportCSV}>
                   <Download className="w-4 h-4 mr-2" /> Export CSV
                 </Button>
@@ -409,10 +526,15 @@ export default function AdminPage() {
             {Object.values(filters).some(Boolean) && (
               <div className="flex flex-wrap gap-2 mb-4">
                 {Object.entries(filters).map(([key, value]) => (
-                  <Badge key={key} variant="secondary">
-                    {allColumns.find((c) => c.key === key)?.label}: {value}
-                    <X className="ml-2 h-3 w-3 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, [key]: '' }))} />
-                  </Badge>
+                  value && (
+                    <Badge key={key} variant="secondary">
+                      {allColumns.find((c) => c.key === key)?.label}: {value}
+                      <X 
+                        className="ml-2 h-3 w-3 cursor-pointer" 
+                        onClick={() => handleFilterChange(key, '')} 
+                      />
+                    </Badge>
+                  )
                 ))}
               </div>
             )}
@@ -446,7 +568,7 @@ export default function AdminPage() {
                                     <Input
                                       placeholder={`Enter ${column.label.toLowerCase()}...`}
                                       value={filters[column.key] || ""}
-                                      onChange={(e) => setFilters(prev => ({ ...prev, [column.key]: e.target.value }))}
+                                      onChange={(e) => handleFilterChange(column.key, e.target.value)}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                           e.preventDefault();
@@ -455,7 +577,7 @@ export default function AdminPage() {
                                       }}
                                     />
                                     <div className="flex justify-end gap-2">
-                                      <Button size="sm" variant="outline" onClick={() => setFilters(prev => ({ ...prev, [column.key]: "" }))}>
+                                      <Button size="sm" variant="outline" onClick={() => handleFilterChange(column.key, "")}>
                                         Reset
                                       </Button>
                                     </div>
@@ -468,7 +590,6 @@ export default function AdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {/* 3. Use paginatedUsers for rendering */}
                     {paginatedUsers.length > 0 ? (
                       paginatedUsers.map((item) => (
                         <TableRow key={item.$id}>
@@ -500,14 +621,10 @@ export default function AdminPage() {
             </div>
             <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {/* 4. Display pagination info */}
                 <span>
                   Showing {paginatedUsers.length} of {filteredAndSortedUsers.length} users
                 </span>
-                <Select onValueChange={(value) => {
-                  setRowsPerPage(Number(value));
-                  setPage(1); // Reset to page 1 when rowsPerPage changes
-                }} value={rowsPerPage.toString()}>
+                <Select onValueChange={handleRowsPerPageChange} value={rowsPerPage.toString()}>
                   <SelectTrigger className="w-auto">
                     <SelectValue placeholder="Rows per page" />
                   </SelectTrigger>
@@ -519,7 +636,6 @@ export default function AdminPage() {
                   </SelectContent>
                 </Select>
               </div>
-              {/* 5. Add pagination controls */}
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -529,6 +645,9 @@ export default function AdminPage() {
                 >
                   Previous
                 </Button>
+                <span className="flex items-center px-3 text-sm text-muted-foreground">
+                  Page {page} of {Math.ceil(filteredAndSortedUsers.length / rowsPerPage) || 1}
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
