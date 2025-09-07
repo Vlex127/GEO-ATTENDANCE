@@ -49,7 +49,7 @@ export default function BackgroundRippleEffectDemo() {
         </h2>
         <p
           className="relative z-10 mx-auto mt-4 max-w-xl text-center text-neutral-800 dark:text-neutral-500">
-          An comprehensive attendance management system designed to streamline and enhance the
+          A comprehensive attendance management system designed to streamline and enhance the
           process of tracking and managing attendance records efficiently.
         </p>
         
