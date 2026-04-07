@@ -1,4 +1,3 @@
-import { GalleryVerticalEnd } from "lucide-react"
 import "../app.css"
 import { LoginForm } from "@/components/login-form"
 import { ThemeToggle } from "@/components/theme-toggle"

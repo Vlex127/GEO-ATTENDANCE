@@ -169,20 +169,18 @@ export default function AdminPage() {
 
   const resetTablePreferences = () => {
     try {
-      const storage = getStorage();
-      if (storage) {
-        storage.removeItem(STORAGE_KEY);
-      }
-      
-      // Reset all state to defaults
-      resetToDefaults();
-      
-      console.log("Table preferences reset to defaults");
+      localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-      console.error("Failed to reset table preferences:", error);
-      // Still reset to defaults even if storage removal fails
-      resetToDefaults();
+      console.error("Failed to reset table preferences for key:", STORAGE_KEY, error);
     }
+
+    // Reset all state to defaults
+    setVisibleColumns(defaultTableState.visibleColumns);
+    setSortDescriptor(defaultTableState.sortDescriptor);
+    setFilters(defaultTableState.filters);
+    setPage(defaultTableState.page);
+    setRowsPerPage(defaultTableState.rowsPerPage);
+    setSearchQuery(defaultTableState.searchQuery);
   };
 
   useEffect(() => {
